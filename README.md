@@ -1,166 +1,201 @@
 # logid
 
-基于 Rust 开发的命令行工具，用于通过 logid 查询内部日志服务。
+[![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## 功能特性
+A fast, reliable command-line tool for querying distributed log services by trace ID.
 
-- 多区域支持：美区 (us)、国际化区域 (i18n)、中国区 (cn)
-- JWT 认证：自动获取和刷新认证令牌
-- 消息过滤：自动移除冗余信息
-- JSON 输出：结构化输出便于解析
+## Features
 
-## 安装
+- **Multi-Region Support** - Query logs across US, International, and CN regions
+- **Smart Authentication** - Automatic JWT token management with caching
+- **Message Filtering** - Built-in noise reduction for cleaner output
+- **Structured Output** - JSON format for easy parsing and integration
+- **Self-Update** - Built-in update mechanism for easy upgrades
+
+## Installation
+
+### From Source
 
 ```bash
+git clone https://github.com/DreamCats/logid.git
+cd logid
 cargo build --release
 ```
 
-编译后的二进制文件位于 `target/release/logid`。
+Binary will be available at `target/release/logid`.
 
-## 配置
+### Pre-built Binaries
 
-### 环境变量
+Download from [Releases](https://github.com/DreamCats/logid/releases).
 
-工具从以下位置加载 `.env` 文件（按优先级）：
+## Quick Start
 
-1. 可执行文件同级目录：`<exe_dir>/.env`
-2. 用户配置目录：`~/.logid/.env`
+```bash
+# Query logs in US region
+logid query <trace-id> --region us
 
-创建配置：
+# Query with PSM filter
+logid query <trace-id> --region us --psm my.service
+
+# Multiple PSM filters
+logid query <trace-id> --region i18n --psm service.a --psm service.b
+```
+
+## Configuration
+
+Create a configuration file at `~/.logid/.env`:
 
 ```bash
 mkdir -p ~/.logid
-cat > ~/.logid/.env << EOF
-CAS_SESSION_US=your_us_session_cookie
-CAS_SESSION_I18n=your_i18n_session_cookie
+cat > ~/.logid/.env << 'EOF'
+CAS_SESSION_US=your_us_session
+CAS_SESSION_I18n=your_i18n_session
+CAS_SESSION_CN=your_cn_session
 EOF
 ```
 
-### 获取 CAS_SESSION
+Configuration is loaded from (in order of priority):
+1. `<executable-directory>/.env`
+2. `~/.logid/.env`
 
-1. 登录对应的云平台
-2. 浏览器开发者工具 → Cookie
-3. 找到 `CAS_SESSION` 的值
+## Usage
 
-## 使用
+```
+logid query <LOGID> --region <REGION> [OPTIONS]
 
-```bash
-# 查询美区日志
-logid query <logid> --region us
+Arguments:
+  <LOGID>  Trace ID to query
 
-# 查询国际化区域
-logid query <logid> --region i18n
-
-# 过滤特定 PSM
-logid query <logid> --region us --psm service.psm
-
-# 多个 PSM
-logid query <logid> --region us --psm psm1 --psm psm2
+Options:
+  -r, --region <REGION>  Target region (us/i18n/cn)
+  -p, --psm <PSM>        Filter by PSM (can be specified multiple times)
+  -h, --help             Print help
+  -V, --version          Print version
 ```
 
-### 参数
+### Examples
 
-| 参数 | 必需 | 说明 |
-|------|------|------|
-| `logid` | 是 | 日志 ID |
-| `--region`, `-r` | 是 | 区域 (cn/i18n/us) |
-| `--psm`, `-p` | 否 | PSM 过滤（可多次指定）|
+```bash
+# Basic query
+logid query "abc-123-def" --region us
 
-## 输出示例
+# Filter specific service
+logid query "abc-123-def" --region us --psm payment.service
+
+# Query international region with multiple filters
+logid query "abc-123-def" --region i18n \
+  --psm user.service \
+  --psm auth.service
+```
+
+## Output
 
 ```json
 {
-  "logid": "20240101-abc123",
+  "logid": "abc-123-def",
   "region": "us",
-  "region_display_name": "美区",
-  "total_items": 5,
+  "region_display_name": "US Region",
+  "total_items": 3,
   "messages": [
     {
       "id": "msg_1",
       "group": {
         "psm": "payment.service",
-        "pod_name": "payment-pod-123",
-        "ipv4": "192.168.1.100"
+        "pod_name": "payment-pod-abc",
+        "ipv4": "10.0.0.1",
+        "env": "production"
       },
       "values": [
         {
           "key": "_msg",
           "value": "Payment processed successfully"
         }
-      ]
+      ],
+      "level": "INFO",
+      "location": "src/handler.rs:42"
     }
   ],
   "timestamp": "2024-01-01T12:00:00Z"
 }
 ```
 
-## 区域
+## Environment Variables
 
-| 区域 | 状态 |
-|------|------|
-| `us` | 可用 |
-| `i18n` | 可用 |
-| `cn` | 待配置 |
+| Variable | Description |
+|----------|-------------|
+| `CAS_SESSION_US` | Authentication for US region |
+| `CAS_SESSION_I18n` | Authentication for International region |
+| `CAS_SESSION_CN` | Authentication for CN region |
+| `CAS_SESSION` | Fallback authentication |
+| `ENABLE_LOGGING` | Enable debug output (`true`/`false`) |
 
-## 消息过滤
+## Supported Regions
 
-自动过滤以下冗余信息：
-- `_compliance_nlp_log`
-- `_compliance_whitelist_log`
-- `_compliance_source=footprint`
-- `user_extra` 字段
-- `LogID`、`Addr`、`Client` 字段
+| Region | Status |
+|--------|--------|
+| `us` | Available |
+| `i18n` | Available |
+| `cn` | Coming soon |
 
-## 代码结构
-
-```
-src/
-├── lib.rs              # 库入口
-├── main.rs             # CLI 入口
-├── error.rs            # 错误定义
-├── auth/               # 认证模块
-│   ├── manager.rs      # JWT 认证管理
-│   └── multi_region.rs # 多区域认证
-├── config/             # 配置模块
-│   ├── region.rs       # 区域配置
-│   ├── env.rs          # 环境变量
-│   └── filter.rs       # 消息过滤
-├── log_query/          # 日志查询模块
-│   ├── types.rs        # 数据类型
-│   ├── client.rs       # 查询客户端
-│   └── multi_region.rs # 多区域查询
-├── output/             # 输出模块
-│   ├── format.rs       # 输出配置
-│   └── formatter.rs    # JSON 格式化
-└── commands/           # 子命令
-    └── update.rs       # 自更新
-```
-
-## 开发
+## Self-Update
 
 ```bash
-# 测试
+# Check for updates
+logid update --check
+
+# Update to latest version
+logid update
+
+# Force update
+logid update --force
+```
+
+## Development
+
+```bash
+# Run tests
 cargo test
 
-# 调试运行
+# Build debug version
+cargo build
+
+# Run with debug logging
 ENABLE_LOGGING=true cargo run -- query <logid> --region us
 ```
 
-## 环境变量
+## Project Structure
 
-| 变量 | 说明 |
-|------|------|
-| `CAS_SESSION_US` | 美区认证 |
-| `CAS_SESSION_I18n` | 国际化区域认证 |
-| `CAS_SESSION_CN` | 中国区认证 |
-| `CAS_SESSION` | 通用回退 |
-| `ENABLE_LOGGING` | 启用调试日志 |
+```
+src/
+├── lib.rs              # Library entry point
+├── main.rs             # CLI entry point
+├── error.rs            # Error definitions
+├── auth/               # Authentication module
+├── config/             # Configuration management
+├── log_query/          # Log query client
+├── output/             # Output formatting
+└── commands/           # CLI subcommands
+```
 
-## 更新日志
+## Contributing
 
-### v0.1.0
-- 初始版本
-- 多区域日志查询
-- PSM 过滤
-- JSON 输出
-- 消息过滤
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+Built with these excellent crates:
+- [clap](https://github.com/clap-rs/clap) - Command line argument parsing
+- [reqwest](https://github.com/seanmonstar/reqwest) - HTTP client
+- [tokio](https://github.com/tokio-rs/tokio) - Async runtime
+- [serde](https://github.com/serde-rs/serde) - Serialization framework
