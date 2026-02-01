@@ -15,6 +15,18 @@ A fast, reliable command-line tool for querying distributed log services by trac
 
 ## Installation
 
+### Quick Install (Recommended)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/DreamCats/logid/main/install.sh | bash
+```
+
+Or with custom install directory:
+
+```bash
+INSTALL_DIR=/usr/local/bin curl -fsSL https://raw.githubusercontent.com/DreamCats/logid/main/install.sh | bash
+```
+
 ### From Source
 
 ```bash
