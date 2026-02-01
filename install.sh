@@ -37,19 +37,31 @@ detect_platform() {
     echo "${arch}-${os}"
 }
 
-# Get latest version from GitHub
+# Get latest version from GitHub (using redirect to avoid API rate limits)
 get_latest_version() {
+    # Method 1: Use GitHub redirect (no API rate limit)
+    local redirect_url
+    redirect_url=$(curl -sI "https://github.com/${REPO}/releases/latest" 2>/dev/null | grep -i "^location:" | sed 's/.*tag\/\([^[:space:]]*\).*/\1/' | tr -d '\r')
+
+    if [ -n "$redirect_url" ]; then
+        echo "$redirect_url"
+        return
+    fi
+
+    # Method 2: Fallback to API
     local response
     response=$(curl -sL "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null)
 
-    # Check for rate limit or error
-    if echo "$response" | grep -q "API rate limit"; then
-        warn "GitHub API rate limit exceeded, trying alternative method..."
-        # Fallback: get latest tag from git
-        response=$(curl -sL "https://api.github.com/repos/${REPO}/tags" 2>/dev/null)
-        echo "$response" | grep '"name":' | head -1 | sed -E 's/.*"([^"]+)".*/\1/'
-    else
+    if echo "$response" | grep -q "tag_name"; then
         echo "$response" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'
+        return
+    fi
+
+    # Method 3: Try tags API
+    response=$(curl -sL "https://api.github.com/repos/${REPO}/tags" 2>/dev/null)
+    if echo "$response" | grep -q '"name":'; then
+        echo "$response" | grep '"name":' | head -1 | sed -E 's/.*"([^"]+)".*/\1/'
+        return
     fi
 }
 
@@ -62,7 +74,7 @@ install() {
 
     version=$(get_latest_version)
     if [ -z "$version" ]; then
-        error "Failed to get latest version"
+        error "Failed to get latest version. Please check your network connection."
     fi
     info "Latest version: $version"
 
@@ -72,13 +84,28 @@ install() {
     tmp_dir=$(mktemp -d)
     trap "rm -rf $tmp_dir" EXIT
 
-    curl -sL "$download_url" | tar xz -C "$tmp_dir"
+    # Download and extract
+    if ! curl -fsSL "$download_url" | tar xz -C "$tmp_dir" 2>/dev/null; then
+        error "Failed to download or extract. URL: $download_url"
+    fi
 
     # Create install directory if not exists
     mkdir -p "$INSTALL_DIR"
 
     # Install binary
-    mv "$tmp_dir/$BINARY_NAME" "$INSTALL_DIR/"
+    if [ -f "$tmp_dir/$BINARY_NAME" ]; then
+        mv "$tmp_dir/$BINARY_NAME" "$INSTALL_DIR/"
+    else
+        # Try to find binary in subdirectory
+        local found_binary
+        found_binary=$(find "$tmp_dir" -name "$BINARY_NAME" -type f 2>/dev/null | head -1)
+        if [ -n "$found_binary" ]; then
+            mv "$found_binary" "$INSTALL_DIR/"
+        else
+            error "Binary not found in archive"
+        fi
+    fi
+
     chmod +x "$INSTALL_DIR/$BINARY_NAME"
 
     info "Installed to: $INSTALL_DIR/$BINARY_NAME"
