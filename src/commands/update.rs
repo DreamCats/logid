@@ -75,7 +75,7 @@ async fn get_latest_release() -> Result<GitHubRelease> {
         .build()
         .map_err(|e| anyhow::anyhow!("创建 HTTP 客户端失败: {}", e))?;
 
-    let url = "https://api.github.com/repos/DreamCats/byted-cli-scripts/releases/latest";
+    let url = "https://api.github.com/repos/DreamCats/logid/releases/latest";
 
     let response = client
         .get(url)
@@ -112,12 +112,13 @@ fn detect_platform() -> String {
     let os = env::consts::OS;
     let arch = env::consts::ARCH;
 
+    // 匹配 workflow 生成的文件名格式
     match (os, arch) {
-        ("linux", "x86_64") => "linux-x64".to_string(),
-        ("linux", "aarch64") => "linux-arm64".to_string(),
-        ("macos", "x86_64") => "macos-x64".to_string(),
-        ("macos", "aarch64") => "macos-arm64".to_string(),
-        ("windows", "x86_64") => "windows-x64".to_string(),
+        ("linux", "x86_64") => "x86_64-unknown-linux".to_string(),
+        ("linux", "aarch64") => "aarch64-unknown-linux".to_string(),
+        ("macos", "x86_64") => "x86_64-apple-darwin".to_string(),
+        ("macos", "aarch64") => "aarch64-apple-darwin".to_string(),
+        ("windows", "x86_64") => "x86_64-pc-windows".to_string(),
         _ => format!("{}-{}", os, arch),
     }
 }
