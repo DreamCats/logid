@@ -39,8 +39,18 @@ detect_platform() {
 
 # Get latest version from GitHub
 get_latest_version() {
-    curl -sL "https://api.github.com/repos/${REPO}/releases/latest" | \
-        grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'
+    local response
+    response=$(curl -sL "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null)
+
+    # Check for rate limit or error
+    if echo "$response" | grep -q "API rate limit"; then
+        warn "GitHub API rate limit exceeded, trying alternative method..."
+        # Fallback: get latest tag from git
+        response=$(curl -sL "https://api.github.com/repos/${REPO}/tags" 2>/dev/null)
+        echo "$response" | grep '"name":' | head -1 | sed -E 's/.*"([^"]+)".*/\1/'
+    else
+        echo "$response" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'
+    fi
 }
 
 # Download and install
