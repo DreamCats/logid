@@ -1,6 +1,6 @@
 [package]
 name = "logid"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 authors = ["bytedance"]
 description = "基于 Rust 的 logid 查询工具，支持多区域日志查询"
