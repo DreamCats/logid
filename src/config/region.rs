@@ -11,6 +11,8 @@ pub enum Region {
     I18n,
     /// 美区
     Us,
+    /// 欧洲区
+    Eu,
 }
 
 impl Region {
@@ -21,6 +23,7 @@ impl Region {
             "cn" => Some(Self::Cn),
             "i18n" => Some(Self::I18n),
             "us" => Some(Self::Us),
+            "eu" => Some(Self::Eu),
             _ => None,
         }
     }
@@ -31,6 +34,7 @@ impl Region {
             Self::Cn => "cn",
             Self::I18n => "i18n",
             Self::Us => "us",
+            Self::Eu => "eu",
         }
     }
 
@@ -40,6 +44,7 @@ impl Region {
             Self::Cn => "CAS_SESSION_CN",
             Self::I18n => "CAS_SESSION_I18n",
             Self::Us => "CAS_SESSION_US",
+            Self::Eu => "CAS_SESSION_EU",
         }
     }
 
@@ -49,6 +54,7 @@ impl Region {
             Self::Cn => "中国区",
             Self::I18n => "国际化区域（新加坡）",
             Self::Us => "美区",
+            Self::Eu => "欧洲区",
         }
     }
 }
@@ -132,6 +138,19 @@ pub fn get_region_config(region_str: &str) -> Option<RegionConfig> {
                 "https://logservice-tx.tiktok-us.org/streamlog/platform/microservice/v1/query/trace".to_string(),
                 "US-TTP,US-TTP2".to_string(),
                 vec!["US-TTP".to_string(), "US-TTP2".to_string()],
+            ))
+        }
+        Region::Eu => {
+            Some(RegionConfig::new(
+                Region::Eu,
+                "https://logservice-eu-ttp.tiktok-eu.org/streamlog/platform/microservice/v1/query/trace".to_string(),
+                "US-EastRed,EU-TTP2,EU-TTP-PPE,EU-TTP".to_string(),
+                vec![
+                    "US-EastRed".to_string(),
+                    "EU-TTP2".to_string(),
+                    "EU-TTP-PPE".to_string(),
+                    "EU-TTP".to_string(),
+                ],
             ))
         }
     }

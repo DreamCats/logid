@@ -7,7 +7,7 @@ A fast, reliable command-line tool for querying distributed log services by trac
 
 ## Features
 
-- **Multi-Region Support** - Query logs across US, International, and CN regions
+- **Multi-Region Support** - Query logs across US, International, Europe, and CN regions
 - **Smart Authentication** - Automatic JWT token management with caching
 - **Message Filtering** - Built-in noise reduction for cleaner output
 - **Structured Output** - JSON format for easy parsing and integration
@@ -64,6 +64,7 @@ cat > ~/.config/logid/.env << 'EOF'
 CAS_SESSION_US=your_us_session
 CAS_SESSION_I18n=your_i18n_session
 CAS_SESSION_CN=your_cn_session
+CAS_SESSION_EU=your_eu_session
 EOF
 ```
 
@@ -80,7 +81,7 @@ Arguments:
   <LOGID>  Trace ID to query
 
 Options:
-  -r, --region <REGION>  Target region (us/i18n/cn)
+  -r, --region <REGION>  Target region (us/i18n/cn/eu)
   -p, --psm <PSM>        Filter by PSM (can be specified multiple times)
   -h, --help             Print help
   -V, --version          Print version
@@ -139,6 +140,7 @@ logid query "abc-123-def" --region i18n \
 | `CAS_SESSION_US` | Authentication for US region |
 | `CAS_SESSION_I18n` | Authentication for International region |
 | `CAS_SESSION_CN` | Authentication for CN region |
+| `CAS_SESSION_EU` | Authentication for EU region |
 | `CAS_SESSION` | Fallback authentication |
 | `ENABLE_LOGGING` | Enable debug output (`true`/`false`) |
 
@@ -148,6 +150,7 @@ logid query "abc-123-def" --region i18n \
 |--------|--------|
 | `us` | Available |
 | `i18n` | Available |
+| `eu` | Available |
 | `cn` | Coming soon |
 
 ## Self-Update

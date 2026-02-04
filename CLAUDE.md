@@ -4,7 +4,7 @@ This file provides guidance to Claude Code when working with this repository.
 
 ## Project Overview
 
-Rust-based CLI tool for querying internal log services by logid. Supports multi-region (US, I18N, CN) queries with JWT authentication, PSM filtering, and JSON output.
+Rust-based CLI tool for querying internal log services by logid. Supports multi-region (US, I18N, EU, CN) queries with JWT authentication, PSM filtering, and JSON output.
 
 ## Build Commands
 
@@ -34,6 +34,7 @@ mkdir -p ~/.config/logid
 cat > ~/.config/logid/.env << EOF
 CAS_SESSION_US=your_session
 CAS_SESSION_I18n=your_session
+CAS_SESSION_EU=your_session
 EOF
 ```
 
@@ -78,6 +79,7 @@ src/
 | `CAS_SESSION_US` | US region auth |
 | `CAS_SESSION_I18n` | I18N region auth |
 | `CAS_SESSION_CN` | CN region auth |
+| `CAS_SESSION_EU` | EU region auth |
 | `CAS_SESSION` | Fallback auth |
 | `ENABLE_LOGGING` | Debug logging (true/false) |
 
