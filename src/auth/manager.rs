@@ -13,7 +13,7 @@ const REGION_AUTH_URLS: &[(Region, &str)] = &[
     (Region::Cn, "https://cloud.bytedance.net/auth/api/v1/jwt"),
     (Region::I18n, "https://cloud-i18n.bytedance.net/auth/api/v1/jwt"),
     (Region::Us, "https://cloud-ttp-us.bytedance.net/auth/api/v1/jwt"),
-    (Region::Eu, "https://cloud-i18n.tiktok-eu.net/auth/api/v1"),
+    (Region::Eu, "https://cloud-i18n.tiktok-eu.org/auth/api/v1"),
 ];
 
 /// JWT 认证管理器
