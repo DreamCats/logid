@@ -9,6 +9,27 @@ use regex::Regex;
 use std::time::Instant;
 use tracing::{error, warn};
 
+/// 从环境变量获取代理地址
+fn get_proxy_from_env() -> Option<reqwest::Proxy> {
+    // 优先使用 HTTPS_PROXY
+    if let Ok(proxy) = std::env::var("HTTPS_PROXY") {
+        if !proxy.is_empty() {
+            if let Ok(p) = reqwest::Proxy::https(&proxy) {
+                return Some(p);
+            }
+        }
+    }
+    // 其次使用 HTTP_PROXY
+    if let Ok(proxy) = std::env::var("HTTP_PROXY") {
+        if !proxy.is_empty() {
+            if let Ok(p) = reqwest::Proxy::http(&proxy) {
+                return Some(p);
+            }
+        }
+    }
+    None
+}
+
 /// 日志查询客户端
 ///
 /// 提供基于 JWT 认证的多区域日志查询功能，支持美区和国际化区域的并发查询。
@@ -35,7 +56,7 @@ impl LogQueryClient {
         let message_filters = create_message_filters(None)?;
 
         // 配置 HTTP 客户端
-        let client = reqwest::Client::builder()
+        let mut client_builder = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(30))
             .user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0")
             .default_headers({
@@ -53,7 +74,14 @@ impl LogQueryClient {
                     "application/json".parse().unwrap(),
                 );
                 headers
-            })
+            });
+
+        // 添加代理配置
+        if let Some(proxy) = get_proxy_from_env() {
+            client_builder = client_builder.proxy(proxy);
+        }
+
+        let client = client_builder
             .build()
             .map_err(|e| LogidError::InternalError(format!("创建 HTTP 客户端失败: {}", e)))?;
 

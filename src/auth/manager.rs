@@ -8,6 +8,27 @@ use std::time::Duration;
 use tokio::sync::RwLock;
 use tracing::{debug, error, warn};
 
+/// 从环境变量获取代理地址
+fn get_proxy_from_env() -> Option<reqwest::Proxy> {
+    // 优先使用 HTTPS_PROXY
+    if let Ok(proxy) = std::env::var("HTTPS_PROXY") {
+        if !proxy.is_empty() {
+            if let Ok(p) = reqwest::Proxy::https(&proxy) {
+                return Some(p);
+            }
+        }
+    }
+    // 其次使用 HTTP_PROXY
+    if let Ok(proxy) = std::env::var("HTTP_PROXY") {
+        if !proxy.is_empty() {
+            if let Ok(p) = reqwest::Proxy::http(&proxy) {
+                return Some(p);
+            }
+        }
+    }
+    None
+}
+
 /// 区域 JWT 认证端点配置
 const REGION_AUTH_URLS: &[(Region, &str)] = &[
     (Region::Cn, "https://cloud.bytedance.net/auth/api/v1/jwt"),
@@ -68,7 +89,7 @@ impl AuthManager {
             });
 
         // 配置 HTTP 客户端，模拟浏览器行为
-        let client = reqwest::Client::builder()
+        let mut client_builder = reqwest::Client::builder()
             .timeout(Duration::from_secs(30))
             .user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0")
             .default_headers({
@@ -86,7 +107,18 @@ impl AuthManager {
                     "gzip, deflate, br, zstd".parse().unwrap(),
                 );
                 headers
-            })
+            });
+
+        // 添加代理配置
+        if let Some(proxy) = get_proxy_from_env() {
+            client_builder = client_builder.proxy(proxy);
+            let proxy_url = std::env::var("HTTPS_PROXY")
+                .or_else(|_| std::env::var("HTTP_PROXY"))
+                .unwrap_or_default();
+            conditional_info!("使用代理: {}", proxy_url);
+        }
+
+        let client = client_builder
             .build()
             .map_err(|e| LogidError::InternalError(format!("创建 HTTP 客户端失败: {}", e)))?;
 
