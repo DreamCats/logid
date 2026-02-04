@@ -27,11 +27,11 @@ ENABLE_LOGGING=true cargo run -- query <logid> --region us
 
 `.env` file locations (by priority):
 1. `<exe_dir>/.env`
-2. `~/.logid/.env`
+2. `~/.config/logid/.env`
 
 ```bash
-mkdir -p ~/.logid
-cat > ~/.logid/.env << EOF
+mkdir -p ~/.config/logid
+cat > ~/.config/logid/.env << EOF
 CAS_SESSION_US=your_session
 CAS_SESSION_I18n=your_session
 EOF

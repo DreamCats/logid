@@ -56,11 +56,11 @@ logid query <trace-id> --region i18n --psm service.a --psm service.b
 
 ## Configuration
 
-Create a configuration file at `~/.logid/.env`:
+Create a configuration file at `~/.config/logid/.env`:
 
 ```bash
-mkdir -p ~/.logid
-cat > ~/.logid/.env << 'EOF'
+mkdir -p ~/.config/logid
+cat > ~/.config/logid/.env << 'EOF'
 CAS_SESSION_US=your_us_session
 CAS_SESSION_I18n=your_i18n_session
 CAS_SESSION_CN=your_cn_session
@@ -69,7 +69,7 @@ EOF
 
 Configuration is loaded from (in order of priority):
 1. `<executable-directory>/.env`
-2. `~/.logid/.env`
+2. `~/.config/logid/.env`
 
 ## Usage
 

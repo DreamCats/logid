@@ -6,7 +6,7 @@ use crate::error::LogidError;
 use std::collections::HashMap;
 
 /// 用户配置目录名称
-const USER_CONFIG_DIR: &str = ".logid";
+const USER_CONFIG_DIR: &str = ".config/logid";
 /// 环境变量文件名
 const ENV_FILE_NAME: &str = ".env";
 
@@ -28,7 +28,7 @@ impl EnvManager {
         // 构建可执行文件同级目录的 .env 文件路径
         let exe_env_path = exe_dir.join(ENV_FILE_NAME);
 
-        // 构建用户级别目录的 .env 文件路径 (~/.logid/.env)
+        // 构建用户级别目录的 .env 文件路径 (~/.config/logid/.env)
         let user_env_path = dirs::home_dir()
             .map(|home| home.join(USER_CONFIG_DIR).join(ENV_FILE_NAME))
             .ok_or_else(|| LogidError::InternalError("无法确定用户主目录".to_string()))?;
